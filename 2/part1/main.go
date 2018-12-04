@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -18,6 +19,7 @@ func main() {
 	two := 0
 	three := 0
 
+	ids := []*ID{}
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -29,9 +31,18 @@ func main() {
 		if id.triplicate {
 			three++
 		}
+		ids = append(ids, id)
 	}
 
-	fmt.Println(two * three)
+	fmt.Printf("checksum: %d\n", two*three)
+
+	for i, id := range ids {
+		matching := hammingDistanceMatch(id, i, ids, 1)
+		if matching != nil {
+			fmt.Printf("common letters: %s", commonRunes(id.runes, matching.runes))
+			break
+		}
+	}
 }
 
 // ID is the box ID
@@ -62,4 +73,50 @@ func new(runes string) *ID {
 		}
 	}
 	return id
+}
+
+func hammingDistanceMatch(id *ID, i int, ids []*ID, distance int) *ID {
+	if i+1 >= len(ids) {
+		return nil
+	}
+
+	for _, other := range ids[i+1:] {
+		if hammingDistance(id.runes, other.runes) == distance {
+			return other
+		}
+	}
+
+	return nil
+}
+
+func hammingDistance(a, b string) int {
+	if len(a) != len(b) {
+		panic(fmt.Sprintf("Undefined for strings of unequal length. Got <%s> and <%s>", a, b))
+	}
+
+	res := 0
+
+	bRunes := []rune(b)
+
+	for i, r := range a {
+		if bRunes[i] != r {
+			res++
+		}
+	}
+
+	return res
+}
+
+func commonRunes(a, b string) string {
+	var res strings.Builder
+
+	bRunes := []rune(b)
+
+	for i, r := range a {
+		if bRunes[i] == r {
+			res.WriteRune(r)
+		}
+	}
+
+	return res.String()
 }
