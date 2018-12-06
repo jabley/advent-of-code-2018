@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
+	"time"
 )
 
 const charDiff = 'a' - 'A'
 
-func React(src string) string {
+func React(src string) int {
 	res := []rune{}
 
 	for _, r := range src {
@@ -23,10 +25,55 @@ func React(src string) string {
 		res = append(res, r)
 	}
 
-	return string(res)
+	return len(res)
 }
 
-func main() {
+func OptimisedReact(src string) int {
+	shortest := len(src)
+
+	for r := 'A'; r < 'Z'; r++ {
+		candidate := removeUnit(src, r)
+		stable := React(candidate)
+		if stable < shortest {
+			shortest = stable
+		}
+	}
+
+	return shortest
+}
+
+func ReOptimisedReact(src string) int {
+	units := detectUnits(src)
+
+	shortest := len(src)
+
+	for r := range units {
+		candidate := removeUnit(src, r)
+		stable := React(candidate)
+		if stable < shortest {
+			shortest = stable
+		}
+	}
+
+	return shortest
+}
+
+func detectUnits(src string) (res map[rune]struct{}) {
+	res = make(map[rune]struct{})
+	for r := 'A'; r < 'Z'; r++ {
+		if strings.ContainsAny(src, string([]rune{r, r + charDiff})) {
+			res[r] = struct{}{}
+		}
+	}
+
+	return
+}
+
+func removeUnit(src string, r rune) string {
+	return strings.Replace(strings.Replace(src, string(r), "", -1), string(r+charDiff), "", -1)
+}
+
+func ReadInput() string {
 	f, err := os.Open("input.txt")
 
 	if err != nil {
@@ -41,7 +88,18 @@ func main() {
 		panic(err)
 	}
 
-	stable := React(string(input))
+	return string(input)
+}
 
-	fmt.Println(len(stable))
+func main() {
+	input := ReadInput()
+	start := time.Now()
+	stable := React(input)
+	duration := time.Since(start)
+	fmt.Printf("Got %d in %v\n", stable, duration)
+
+	start = time.Now()
+	shortest := OptimisedReact(input)
+	duration = time.Since(start)
+	fmt.Printf("Got %d in %v\n", shortest, duration)
 }
