@@ -23,10 +23,12 @@ func main() {
 
 	defer f.Close()
 
-	fmt.Printf("%d\n", CalculateArea(f))
+	max, regionSize := CalculateArea(f, 10000)
+	fmt.Printf("%d\n", max)
+	fmt.Printf("%d\n", regionSize)
 }
 
-func CalculateArea(r io.Reader) int {
+func CalculateArea(r io.Reader, maxDistance int) (int, int) {
 	points, size := parseCoords(r)
 
 	// Set of infinite coordinates
@@ -35,12 +37,18 @@ func CalculateArea(r io.Reader) int {
 	// Map of number of locations that each coordinate owns
 	coordinateAreas := make(map[coord]int)
 
+	regionSize := 0
+
 	for y := 0; y <= size.y; y++ {
 		for x := 0; x <= size.x; x++ {
 			minDistance := math.MaxInt64
 			closestCoord := offGrid
+			totalDistance := 0
+
 			for _, c := range points {
 				distance := calculateDistance(c, x, y)
+				totalDistance += distance
+
 				if distance < minDistance {
 					minDistance = distance
 					closestCoord = c
@@ -56,6 +64,10 @@ func CalculateArea(r io.Reader) int {
 			if closestCoord != offGrid {
 				coordinateAreas[closestCoord]++
 			}
+
+			if totalDistance < maxDistance {
+				regionSize++
+			}
 		}
 	}
 
@@ -66,7 +78,7 @@ func CalculateArea(r io.Reader) int {
 		}
 	}
 
-	return max
+	return max, regionSize
 }
 
 func calculateDistance(c coord, x int, y int) (res int) {
