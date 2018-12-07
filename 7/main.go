@@ -26,8 +26,10 @@ func main() {
 
 	defer f.Close()
 
-	order := CalculateOrder(f)
-	fmt.Printf("%s\n", order)
+	// order := CalculateOrder(f)
+	// fmt.Printf("%s\n", order)
+	totalTime := CalculateTime(f, 5, 60)
+	fmt.Printf("%d\n", totalTime)
 }
 
 func CalculateOrder(r io.Reader) string {
@@ -61,6 +63,81 @@ func CalculateOrder(r io.Reader) string {
 	}
 
 	return string(steps)
+}
+
+func CalculateTime(r io.Reader, nWorkers int, fixedJobCost int) int {
+	graph := parseInput(r)
+
+	// workers is a map of step duration keyed by step
+	workers := make(map[rune]int)
+	totalTime := 0
+
+	// While we have nodes to work on, or workers are still working
+	for len(graph) > 0 || len(workers) > 0 {
+		// are there any workers about to become free?
+		for s, t := range workers {
+			workers[s]--
+
+			if t == 1 {
+				// worker will finish on the next second
+				// fmt.Printf("Worker is finishing step %c\n", s)
+
+				delete(workers, s)
+				delete(graph, s)
+
+				for node := range graph {
+					delete(graph[node], s)
+				}
+			}
+		}
+
+		available := []rune{}
+
+		for node, prereqs := range graph {
+			if len(prereqs) == 0 {
+				available = append(available, node)
+			}
+		}
+
+		// If more than one step is ready, choose the step which is first alphabetically
+		sort.Sort(runeSlice(available))
+
+		// fmt.Printf("We have the following steps available to work on: %s\n", string(available))
+
+		// Are there empty workers to assign a job to?
+		for len(workers) < nWorkers {
+			if len(available) == 0 {
+				break // need to let time tick on
+			}
+
+			currStep := available[0]
+			if workers[currStep] == 0 {
+				workers[currStep] = calculateStepTime(currStep, fixedJobCost)
+				delete(graph, currStep)
+				// fmt.Printf("Assigning %c to worker at time %d\n", currStep, totalTime)
+				available = remove(available, currStep)
+			}
+		}
+
+		// fmt.Printf("at time %v, we have workers %v\n", totalTime, workers)
+
+		totalTime++
+	}
+
+	return totalTime - 1
+}
+
+func calculateStepTime(r rune, fixedJobCost int) int {
+	return int(r-'A') + 1 + fixedJobCost
+}
+
+func remove(runes []rune, del rune) []rune {
+	for i, r := range runes {
+		if r == del {
+			return append(runes[:i], runes[i+1:]...)
+		}
+	}
+	return runes
 }
 
 func parseInput(r io.Reader) dag {
