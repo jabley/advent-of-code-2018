@@ -15,6 +15,7 @@ type node struct {
 type LicenceAnalysis struct {
 	root     node
 	Checksum int
+	Value    int
 }
 
 func (la *LicenceAnalysis) calculateChecksum() int {
@@ -37,12 +38,15 @@ func main() {
 
 	analysis := Analyse(f)
 	fmt.Printf("%d\n", analysis.Checksum)
+	fmt.Printf("%d\n", analysis.Value)
 }
 
 func Analyse(r io.Reader) *LicenceAnalysis {
 	res := &LicenceAnalysis{root: parseInput(r)}
 
 	res.Checksum = res.calculateChecksum()
+	res.Value = calculateValue(res.root)
+
 	return res
 }
 
@@ -65,6 +69,23 @@ func calculateChildChecksum(node node) int {
 	}
 
 	return total
+}
+
+func calculateValue(node node) int {
+	if len(node.children) == 0 {
+		return calculateChecksum(node)
+	}
+
+	total := 0
+
+	for _, c := range node.metaData {
+		if c-1 < len(node.children) {
+			total += calculateValue(node.children[c-1])
+		}
+	}
+
+	return total
+
 }
 
 func parseInput(r io.Reader) node {
