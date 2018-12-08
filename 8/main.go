@@ -12,19 +12,48 @@ type node struct {
 	metaData []int
 }
 
+func (n *node) checksum() int {
+	return n.sumChildren() + n.sumMetaData()
+}
+
+func (n *node) sumChildren() int {
+	total := 0
+
+	for _, c := range n.children {
+		total += c.checksum()
+	}
+
+	return total
+}
+
+func (n *node) sumMetaData() int {
+	total := 0
+	for _, m := range n.metaData {
+		total += m
+	}
+	return total
+}
+
+func (n *node) value() int {
+	if len(n.children) == 0 {
+		return n.sumMetaData()
+	}
+
+	total := 0
+
+	for _, c := range n.metaData {
+		if c-1 < len(n.children) {
+			total += n.children[c-1].value()
+		}
+	}
+
+	return total
+}
+
 type LicenceAnalysis struct {
 	root     node
 	Checksum int
 	Value    int
-}
-
-func (la *LicenceAnalysis) calculateChecksum() int {
-	total := 0
-
-	total += calculateChildChecksum(la.root)
-	total += calculateChecksum(la.root)
-
-	return total
 }
 
 func main() {
@@ -44,48 +73,10 @@ func main() {
 func Analyse(r io.Reader) *LicenceAnalysis {
 	res := &LicenceAnalysis{root: parseInput(r)}
 
-	res.Checksum = res.calculateChecksum()
-	res.Value = calculateValue(res.root)
+	res.Checksum = res.root.checksum()
+	res.Value = res.root.value()
 
 	return res
-}
-
-func calculateChecksum(node node) int {
-	total := 0
-
-	for _, m := range node.metaData {
-		total += m
-	}
-
-	return total
-}
-
-func calculateChildChecksum(node node) int {
-	total := 0
-
-	for _, c := range node.children {
-		total += calculateChildChecksum(c)
-		total += calculateChecksum(c)
-	}
-
-	return total
-}
-
-func calculateValue(node node) int {
-	if len(node.children) == 0 {
-		return calculateChecksum(node)
-	}
-
-	total := 0
-
-	for _, c := range node.metaData {
-		if c-1 < len(node.children) {
-			total += calculateValue(node.children[c-1])
-		}
-	}
-
-	return total
-
 }
 
 func parseInput(r io.Reader) node {
