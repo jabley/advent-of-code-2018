@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 type coord struct {
@@ -15,8 +16,15 @@ func (c coord) String() string {
 
 func main() {
 	serial := 6878
-	fmt.Printf("%v\n", BiggestClusterFor3(serial))
-	fmt.Printf("%v\n", BiggestAnySizeCluster(serial))
+	start := time.Now()
+	part1 := BiggestClusterFor3(serial)
+	duration := time.Since(start)
+	fmt.Printf("part 1: %v in %v\n", part1, duration)
+
+	start = time.Now()
+	part2 := BiggestAnySizeCluster(serial)
+	duration = time.Since(start)
+	fmt.Printf("part 2: %v in %v\n", part2, duration)
 }
 
 func populateCells(serial int) [][]int {
