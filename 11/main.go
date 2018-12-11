@@ -13,6 +13,7 @@ func (c coord) String() string {
 func main() {
 	serial := 6878
 	fmt.Printf("%v\n", BiggestClusterFor3(serial))
+	fmt.Printf("%v\n", BiggestAnySizeCluster(serial))
 }
 
 func populateCells(serial int) [][]int {
@@ -63,4 +64,23 @@ func BiggestClusterFor3(serial int) coord {
 	_, res := powerfulCluster(cells, 3)
 
 	return res
+}
+
+func BiggestAnySizeCluster(serial int) string {
+	cells := populateCells(serial)
+
+	best := 0
+	var coord coord
+	size := 0
+
+	for i := 1; i < 301; i++ {
+		power, c := powerfulCluster(cells, i)
+		if power > best {
+			best = power
+			coord = c
+			size = i
+		}
+	}
+
+	return fmt.Sprintf("%s,%d", coord, size)
 }
