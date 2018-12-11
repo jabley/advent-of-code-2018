@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 type coord struct {
 	x, y int
@@ -66,6 +69,12 @@ func BiggestClusterFor3(serial int) coord {
 	return res
 }
 
+type result struct {
+	power int
+	size  int
+	coord coord
+}
+
 func BiggestAnySizeCluster(serial int) string {
 	cells := populateCells(serial)
 
@@ -73,14 +82,43 @@ func BiggestAnySizeCluster(serial int) string {
 	var coord coord
 	size := 0
 
+	results := make(chan result)
+	var wg sync.WaitGroup
+
 	for i := 1; i < 301; i++ {
-		power, c := powerfulCluster(cells, i)
-		if power > best {
-			best = power
-			coord = c
-			size = i
-		}
+		wg.Add(1)
+		go func(size int) {
+			defer wg.Done()
+			power, c := powerfulCluster(cells, size)
+			results <- result{
+				power: power,
+				size:  size,
+				coord: c,
+			}
+		}(i)
 	}
+
+	go func() {
+		for {
+			select {
+			case res, more := <-results:
+				if !more {
+					// Channel has been closed, exit this goroutine
+					return
+				}
+				if res.power > best {
+					best = res.power
+					coord = res.coord
+					size = res.size
+				}
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	// All results have been consumed, there will be no more results.
+	close(results)
 
 	return fmt.Sprintf("%s,%d", coord, size)
 }
