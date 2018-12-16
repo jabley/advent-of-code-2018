@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	"time"
 )
 
@@ -52,7 +51,7 @@ func powerfulCluster(cells [][]int, size int) (int, coord) {
 
 	for y := range clusters {
 		clusters[y] = make([]int, n)
-		for x := range clusters[y] {
+		for x := range clusters[0] {
 			sum := 0
 			for i := 0; i < size; i++ {
 				for j := 0; j < size; j++ {
@@ -86,47 +85,75 @@ type result struct {
 func BiggestAnySizeCluster(serial int) string {
 	cells := populateCells(serial)
 
+	sumTable := BuildSumTable(cells)
+
 	best := 0
-	var coord coord
+	var c coord
 	size := 0
 
-	results := make(chan result)
-	var wg sync.WaitGroup
-
-	for i := 1; i < 301; i++ {
-		wg.Add(1)
-		go func(size int) {
-			defer wg.Done()
-			power, c := powerfulCluster(cells, size)
-			results <- result{
-				power: power,
-				size:  size,
-				coord: c,
-			}
-		}(i)
-	}
-
-	go func() {
-		for {
-			select {
-			case res, more := <-results:
-				if !more {
-					// Channel has been closed, exit this goroutine
-					return
-				}
-				if res.power > best {
-					best = res.power
-					coord = res.coord
-					size = res.size
+	for s := 1; s < 301; s++ {
+		for x := 0; x < 301-s; x++ {
+			for y := 0; y < 301-s; y++ {
+				power := CalculateSquarePower(sumTable, x, y, s)
+				if power > best {
+					best = power
+					c = coord{x: x + 1, y: y + 1}
+					size = s
 				}
 			}
 		}
-	}()
+	}
 
-	wg.Wait()
+	return fmt.Sprintf("%s,%d", c, size)
+}
 
-	// All results have been consumed, there will be no more results.
-	close(results)
+func CalculateSquarePower(sumTable [][]int, x, y, s int) int {
+	top := y - 1
+	left := x - 1
+	bottom := y + s - 1
+	right := x + s - 1
+	var tl, tr, bl, br int
 
-	return fmt.Sprintf("%s,%d", coord, size)
+	br = sumTable[bottom][right]
+
+	if top < 0 && left < 0 {
+		tr = 0
+		tl = 0
+		bl = 0
+	} else if top < 0 {
+		tr = 0
+		tl = 0
+		bl = sumTable[bottom][left]
+	} else if left < 0 {
+		tl = 0
+		bl = 0
+		tr = sumTable[top][right]
+	} else {
+		tl = sumTable[top][left]
+		tr = sumTable[top][right]
+		bl = sumTable[bottom][left]
+	}
+
+	return br + tl - bl - tr
+}
+
+func BuildSumTable(cells [][]int) [][]int {
+	res := make([][]int, len(cells))
+
+	for col, y := range cells {
+		res[col] = make([]int, len(cells[col]))
+		for row, x := range y {
+			v := x
+			if row != 0 && col != 0 {
+				v += res[col-1][row] + res[col][row-1] - res[col-1][row-1]
+			} else if row != 0 {
+				v += res[col][row-1]
+			} else if col != 0 {
+				v += res[col-1][row]
+			}
+			res[col][row] = v
+		}
+	}
+
+	return res
 }
