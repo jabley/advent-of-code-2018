@@ -101,6 +101,7 @@ func main() {
 	defer f.Close()
 
 	pots, rules := ParseInput(f)
+	part2 := pots
 
 	start := time.Now()
 
@@ -109,6 +110,26 @@ func main() {
 	}
 
 	fmt.Printf("Part 1 %v in %v\n", pots.Sum(), time.Since(start))
+
+	start = time.Now()
+
+	delta := 0
+	last := 0
+
+	for i := 1; i < 1000; i++ {
+		last = part2.Sum()
+		part2 = part2.NextGeneration(rules)
+
+		sum := part2.Sum()
+		newDelta := sum - last
+
+		if newDelta != delta {
+			delta = newDelta
+		} else {
+			fmt.Printf("Part 2 %v after %d generations in %v\n", sum+(50000000000-i)*delta, i, time.Since(start))
+			break
+		}
+	}
 }
 
 func ParseInput(r io.Reader) (pots Pots, rules map[string]string) {
