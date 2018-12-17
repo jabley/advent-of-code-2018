@@ -148,10 +148,11 @@ func main() {
 
 	start := time.Now()
 
-	firstCrash := Tick(tracks, carts)
+	firstCrash, finalCart := Tick(tracks, carts)
 
 	fmt.Printf("Took %v\n", time.Since(start))
 	fmt.Printf("part 1: %d,%d\n", firstCrash.x, firstCrash.y)
+	fmt.Printf("part 2: %d,%d\n", finalCart.x, finalCart.y)
 }
 
 func ParseTracks(r io.Reader) [][]rune {
@@ -202,7 +203,7 @@ func FindCarts(tracks [][]rune) (carts []Cart) {
 	return
 }
 
-func Tick(tracks [][]rune, carts []Cart) (firstCrash *Coord) {
+func Tick(tracks [][]rune, carts []Cart) (firstCrash *Coord, finalCart *Cart) {
 	nCarts := len(carts)
 
 	for t := 1; nCarts > 1; t++ {
@@ -260,6 +261,16 @@ func Tick(tracks [][]rune, carts []Cart) (firstCrash *Coord) {
 		}
 
 		// fmt.Printf("nr of carts after tick %d: %d\n", t, nCarts)
+
+		if nCarts <= 1 {
+			// We may have a single remaining cart...
+			for i := range carts {
+				if !carts[i].crashed {
+					finalCart = &carts[i]
+				}
+			}
+			return
+		}
 	}
 
 	return

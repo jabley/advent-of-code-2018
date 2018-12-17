@@ -12,6 +12,7 @@ func TestExamples(t *testing.T) {
 		height, width int
 		expectedCarts int
 		firstCrash    *Coord
+		finalCart     *Cart
 	}{
 		{`
 |
@@ -25,6 +26,7 @@ v
 			7, 1,
 			2,
 			&Coord{x: 0, y: 3},
+			nil,
 		},
 		{
 			`
@@ -38,6 +40,7 @@ v
 			6, 13,
 			2,
 			&Coord{7, 3},
+			nil,
 		},
 		{
 			`
@@ -52,6 +55,7 @@ v
 			7, 7,
 			9,
 			&Coord{2, 0},
+			&Cart{x: 6, y: 4, Direction: up, track: '|', crashed: false, turn: leftTurn},
 		},
 	}
 
@@ -71,13 +75,20 @@ v
 				t.Errorf("Expected width to be %d but was %d", tt.expectedCarts, len(carts))
 			}
 
-			firstCrash := Tick(tracks, carts)
+			firstCrash, finalCart := Tick(tracks, carts)
 
 			if !(firstCrash == nil && tt.firstCrash == nil) &&
 				((firstCrash == nil && tt.firstCrash != nil) ||
 					(firstCrash != nil && tt.firstCrash == nil) ||
 					(*firstCrash != *tt.firstCrash)) {
 				t.Errorf("Expected firstCrash to be %v but was %v", tt.firstCrash, firstCrash)
+			}
+
+			if (!(finalCart == nil && tt.finalCart == nil)) &&
+				(((finalCart == nil) && (tt.finalCart != nil)) ||
+					((finalCart != nil) && (tt.finalCart == nil)) ||
+					*finalCart != *tt.finalCart) {
+				t.Errorf("Expected finalCart to be %v but was %v", tt.finalCart, finalCart)
 			}
 		})
 	}
