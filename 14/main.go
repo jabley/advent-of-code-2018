@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -36,6 +37,10 @@ func (p *process) pickNewRecipe(elf int) int {
 	return (elf + 1 + recipeScoreToInt(p.scores[elf])) % len(p.scores)
 }
 
+func (p *process) precedingRecipes(sequence string) int {
+	return strings.Index(string(p.scores), sequence)
+}
+
 func recipeScoreToInt(score byte) int {
 	return int(score - '0')
 }
@@ -57,4 +62,18 @@ func main() {
 
 	fmt.Printf("Took %v\n", time.Since(start))
 	fmt.Printf("part 1 %s\n", p.followingScores(input))
+
+	start = time.Now()
+
+	for {
+		if p.precedingRecipes(strconv.Itoa(input)) != -1 {
+			break
+		}
+		for i := 0; i < 5000000; i++ {
+			p.mix()
+		}
+	}
+
+	fmt.Printf("Took %v\n", time.Since(start))
+	fmt.Printf("part 2 %v\n", p.precedingRecipes(strconv.Itoa(input)))
 }
