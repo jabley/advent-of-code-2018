@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"os"
 	"sort"
@@ -150,14 +152,19 @@ var compassPoints = []coord{
 	{0, 1},  // S
 }
 
-func (u *unit) attack(enemy *unit) {
+// attack returns true if an elf died, otherwise false.
+func (u *unit) attack(enemy *unit) bool {
 	enemy.hp -= u.ap
+
 	if enemy.hp <= 0 {
 		// dead
 		enemy.square.kind = kindSpace
 		enemy.square.unit = nil
 		enemy.square = nil
+		return enemy.kind == kindElf
 	}
+
+	return false
 }
 
 func (u *unit) findEnemies(game *game) (res []*unit) {
@@ -253,18 +260,47 @@ func (u *unit) nextStep(game *game) (*square, *square) {
 	return nil, nil
 }
 
-func (u *unit) takeTurn(g *game) {
+// takeTurn returns true if an elf died, otherwise false.
+func (u *unit) takeTurn(g *game) bool {
 	if enemy := u.hasAttackOption(g); enemy != nil {
 		// fmt.Printf("Unit %v is attacking %v\n", u, enemy)
-		u.attack(enemy)
-		return
+		return u.attack(enemy)
 	}
 
 	u.move(g)
 
 	if enemy := u.hasAttackOption(g); enemy != nil {
-		u.attack(enemy)
+		return u.attack(enemy)
 	}
+
+	return false
+}
+
+func playElfBoost(input string) int {
+	elfDied := true
+	var fullRound bool
+
+	for power := 4; elfDied; power++ {
+		g := parseBoardWith(strings.NewReader(input), power)
+
+		for i := 1; true; i++ {
+			fullRound, elfDied = g.playRound(true)
+
+			if elfDied {
+				// Bump the elfPower and try again
+				break
+			}
+
+			if !fullRound {
+				return g.remainingHp() * (i - 1)
+			} else if g.isComplete() {
+				return g.remainingHp() * i
+			}
+		}
+	}
+
+	return -1
+
 }
 
 type game struct {
@@ -307,7 +343,7 @@ func (g *game) isComplete() bool {
 
 func (g *game) play() int {
 	for i := 1; true; i++ {
-		fullRound := g.playRound()
+		fullRound, _ := g.playRound(false)
 
 		if !fullRound {
 			return g.remainingHp() * (i - 1)
@@ -319,8 +355,10 @@ func (g *game) play() int {
 	return -1
 }
 
-// playRound returns false if the round did not fully complete, otherwise true.
-func (g *game) playRound() bool {
+// playRound returns a tuple of bools.
+// The first is true if the round did fully complete, otherwise false.
+// The second is true if an elf died in the round, otherwise false.
+func (g *game) playRound(stopOnElfDeath bool) (bool, bool) {
 	g.removeDead()
 
 	// Sort into reading order of their starting positions in the round
@@ -334,13 +372,15 @@ func (g *game) playRound() bool {
 		}
 
 		if len(u.findEnemies(g)) == 0 {
-			return false
+			return false, false
 		}
 
-		u.takeTurn(g)
+		if u.takeTurn(g) && stopOnElfDeath {
+			return false, true
+		}
 	}
 
-	return true
+	return true, false
 }
 
 func (g *game) remainingHp() int {
@@ -367,6 +407,10 @@ func (g *game) removeDead() {
 }
 
 func parseBoard(r io.Reader) *game {
+	return parseBoardWith(r, defaultAP)
+}
+
+func parseBoardWith(r io.Reader, elfPower int) *game {
 	scanner := bufio.NewScanner(r)
 
 	board := make(map[int]map[int]*square)
@@ -398,7 +442,9 @@ func parseBoard(r io.Reader) *game {
 			case kindGoblin:
 				units = append(units, newUnit(kindGoblin, square))
 			case kindElf:
-				units = append(units, newUnit(kindElf, square))
+				elf := newUnit(kindElf, square)
+				elf.ap = elfPower
+				units = append(units, elf)
 			}
 		}
 	}
@@ -430,8 +476,19 @@ func main() {
 
 	start := time.Now()
 
-	game := parseBoard(f)
+	input, err := ioutil.ReadAll(f)
+
+	if err != nil {
+		panic(err)
+	}
+
+	game := parseBoard(bytes.NewReader(input))
 	outcome := game.play()
 
-	fmt.Printf("%v in %v\n", outcome, time.Since(start))
+	fmt.Printf("Part1: %v in %v\n", outcome, time.Since(start))
+
+	start = time.Now()
+	outcome = playElfBoost(string(input))
+
+	fmt.Printf("Part2: %v in %v\n", outcome, time.Since(start))
 }

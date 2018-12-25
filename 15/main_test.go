@@ -92,7 +92,7 @@ func TestExamples(t *testing.T) {
 			// }
 
 			for i := 0; i < tt.rounds; i++ {
-				g.playRound()
+				g.playRound(false)
 			}
 
 			cave := g.drawCave()
@@ -184,6 +184,84 @@ func TestPart1(t *testing.T) {
 		t.Run(fmt.Sprintf(`%s`, tt.input), func(t *testing.T) {
 			g := parseBoard(strings.NewReader(tt.input))
 			outcome := g.play()
+
+			if outcome != tt.outcome {
+				t.Errorf("Expected %d but was %d", tt.outcome, outcome)
+			}
+		})
+	}
+}
+
+func TestPart2(t *testing.T) {
+	tests := []struct {
+		input   string
+		outcome int
+	}{
+		{
+			`
+#######
+#.G...#
+#...EG#
+#.#.#G#
+#..G#E#
+#.....#
+#######
+`,
+			4988,
+		},
+		{
+			`
+#######
+#E..EG#
+#.#G.E#
+#E.##E#
+#G..#.#
+#..E#.#
+#######`,
+			31284,
+		},
+		{
+			`
+#######
+#E.G#.#
+#.#G..#
+#G.#.G#
+#G..#.#
+#...E.#
+#######`,
+			3478,
+		},
+		{
+			`
+#######
+#.E...#
+#.#..G#
+#.###.#
+#E#G#G#
+#...#G#
+#######
+`,
+			6474,
+		},
+		{
+			`
+#########
+#G......#
+#.E.#...#
+#..##..G#
+#...##..#
+#...#...#
+#.G...G.#
+#.....G.#
+#########
+`,
+			1140,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf(`%s`, tt.input), func(t *testing.T) {
+			outcome := playElfBoost(tt.input)
 
 			if outcome != tt.outcome {
 				t.Errorf("Expected %d but was %d", tt.outcome, outcome)
