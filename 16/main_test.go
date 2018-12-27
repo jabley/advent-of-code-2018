@@ -92,7 +92,7 @@ After:  [3, 1, 0, 2]
 				t.Errorf("Expected a single sequence but got %d", len(sequences))
 			}
 
-			possibleOpCodes := sequences[0].simulateOpCodes()
+			possibleOpCodes := sequences[0].simulateOpCodes(newObservations())
 
 			if possibleOpCodes != tt.possibleOpCodes {
 				t.Errorf("Expected %v but got %v", tt.possibleOpCodes, possibleOpCodes)
