@@ -54,6 +54,10 @@ func (s *sequence) simulateOpCodes(observations observations) int {
 	// fmt.Printf("Evaluating ops for %d, %d with %v\n", s.a(), s.b(), s.initialRegisters)
 
 	for op := opcode(0); op < nOpCodes; op++ {
+		bit := uint16(1 << uint16(s.opcode()))
+		if observations[op]&bit != bit {
+			continue
+		}
 		out := interpret(op, s.a(), s.b(), s.initialRegisters)
 
 		if out == s.outputRegisters[s.c()] {
@@ -61,7 +65,7 @@ func (s *sequence) simulateOpCodes(observations observations) int {
 			res++
 		} else {
 			// this opcode cannot be related to this value, so clear it out
-			observations[op] &^= (1 << uint16(s.opcode()))
+			observations[op] &^= bit
 			// fmt.Printf("observations for opcode %d is now %016b after %d failed simulation\n", op, observations[op], s.opcode())
 		}
 	}
