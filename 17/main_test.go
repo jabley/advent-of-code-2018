@@ -46,9 +46,13 @@ y=13, x=498..504`
 
 	state.fill(point{x: 500, y: 0}, dirDown)
 
-	wet := state.report()
+	wet, retained := state.report()
 
 	if wet != 57 {
 		t.Fatalf("Expected %d wet tiles but was %d", 57, wet)
+	}
+
+	if retained != 29 {
+		t.Fatalf("Expected %d tiles to retain water, but was %d", 29, retained)
 	}
 }

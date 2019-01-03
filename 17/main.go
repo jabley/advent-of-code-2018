@@ -129,8 +129,8 @@ func (s *state) print() {
 	fmt.Printf("%s\n", strings.Join(grid, "\n"))
 }
 
-func (s *state) report() int {
-	s.print()
+func (s *state) report() (int, int) {
+	// s.print()
 
 	wet := make(squareType)
 
@@ -150,7 +150,7 @@ func (s *state) report() int {
 		}
 	}
 
-	return len(wet)
+	return len(wet), len(s.settled)
 }
 
 func (s *state) withinRange(y, minY int) bool {
@@ -241,8 +241,9 @@ func main() {
 
 	state.fill(point{x: 500, y: 0}, dirDown)
 
-	wet := state.report()
+	wet, retained := state.report()
 
 	fmt.Printf("Took %v\n", time.Since(start))
 	fmt.Printf("Part 1: %d\n", wet)
+	fmt.Printf("Part 2: %d\n", retained)
 }
