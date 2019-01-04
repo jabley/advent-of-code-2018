@@ -117,9 +117,28 @@ func main() {
 
 	g := parseGrid(f)
 
+	// Map of the previously seen patterns, and the time/tick-count when they were seen
+	seenStates := make(map[string]int)
+
 	for t := 0; t < 10; t++ {
 		g = g.tick()
+		seenStates[g.String()] = t
 	}
 
 	fmt.Printf("Part 1: %v in %v\n", g.resourceValue(), time.Since(start))
+
+	end := 1000000000
+
+	for t := 10; t < end; t++ {
+		g = g.tick()
+		if when, seen := seenStates[g.String()]; seen {
+			// got a repeating pattern. Skip forward as much as we can.
+			skip := (end - t) / (t - when)
+			t += skip * (t - when)
+		} else {
+			seenStates[g.String()] = t
+		}
+	}
+
+	fmt.Printf("Part 2: %v in %v\n", g.resourceValue(), time.Since(start))
 }
