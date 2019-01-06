@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -28,7 +29,14 @@ type program struct {
 	registers          []int
 }
 
-func (p *program) step() bool {
+func (p *program) step(optimisedVersion bool) bool {
+	if p.instructionPointer == 1 && optimisedVersion {
+		// about to spend ages factoring r3 (from my puzzle input), so
+		// just do the idiomatic go version, rather than trying to
+		// execute the inefficient VM version.
+		p.registers[0] = calculateSumOfFactorsOf(p.registers[3])
+		return false
+	}
 	// When the instruction pointer is bound to a register, its value is
 	// written to that register just before each instruction is executed
 	p.registers[p.ipReg] = p.instructionPointer
@@ -60,10 +68,12 @@ func (p *program) step() bool {
 	return true
 }
 
-func (p *program) execute() int {
-	p.registers = []int{0, 0, 0, 0, 0, 0}
+func (p *program) execute(optimisedVersion bool) int {
+	if p.registers == nil {
+		p.registers = []int{0, 0, 0, 0, 0, 0}
+	}
 
-	for p.step() {
+	for p.step(optimisedVersion) {
 
 	}
 
@@ -231,6 +241,20 @@ func atoi(a string) int {
 	return n
 }
 
+func calculateSumOfFactorsOf(nr int) int {
+	// fmt.Printf("Calculating sum of divisors for %d\n", nr)
+	sqrt := int(math.Sqrt(float64(nr)))
+	result := 0
+
+	for i := 1; i <= sqrt; i++ {
+		if nr%i == 0 {
+			result += i + nr/i
+		}
+	}
+
+	return result
+}
+
 func main() {
 	start := time.Now()
 
@@ -244,7 +268,13 @@ func main() {
 
 	program := parseInput(f)
 
-	output := program.execute()
+	output := program.execute(false)
 
 	fmt.Printf("Part 1 in %v: %d\n", time.Since(start), output)
+
+	start = time.Now()
+	program.registers = []int{1, 0, 0, 0, 0, 0}
+	program.instructionPointer = program.registers[program.ipReg]
+	output = program.execute(true)
+	fmt.Printf("Part 2 in %v: %d\n", time.Since(start), output)
 }
