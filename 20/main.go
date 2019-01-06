@@ -70,6 +70,17 @@ func path(r io.Reader) map[point]int {
 	return grid
 }
 
+func pathOfAtLeast(d int, grid map[point]int) int {
+	res := 0
+	for _, v := range grid {
+		if v >= 1000 {
+			res++
+		}
+	}
+
+	return res
+}
+
 func max(grid map[point]int) int {
 	res := 0
 	for _, v := range grid {
@@ -94,4 +105,5 @@ func main() {
 	grid := path(f)
 
 	fmt.Printf("Part 1 in %v: %d\n", time.Since(start), max(grid))
+	fmt.Printf("Part 2 in %v: %d\n", time.Since(start), pathOfAtLeast(1000, grid))
 }
