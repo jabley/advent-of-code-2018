@@ -23,7 +23,8 @@ MAIN:
     16 seti 27 8 4          r4 := 27 # goto 28
 
 LOOP:
-for r2 in 0..r4
+while ((r2+1)*256) < r5:
+  r2 := r2 + 1
     17 seti 0 1 2           r2 := 0
     18 addi 2 1 3           r3 := r2 + 1
     19 muli 3 256 3         r3 := r3 * 256

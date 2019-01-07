@@ -42,6 +42,10 @@ type program struct {
 }
 
 func (p *program) step(mode mode) (bool, int) {
+	// When the instruction pointer is bound to a register, its value is
+	// written to that register just before each instruction is executed
+	p.registers[p.ipReg] = p.instructionPointer
+
 	// From analysing the input program, we need to compare r1 with r0 using eqrr
 	if p.instructionPointer == 28 {
 		if mode == part1 {
@@ -62,9 +66,35 @@ func (p *program) step(mode mode) (bool, int) {
 		// fmt.Printf("%v\n", p.registers[1])
 	}
 
-	// When the instruction pointer is bound to a register, its value is
-	// written to that register just before each instruction is executed
-	p.registers[p.ipReg] = p.instructionPointer
+	if p.instructionPointer == 17 {
+		// We have a hot loop in the program
+		//
+		// r2 = 0
+		// while ((r2+1) * 256) < r5:
+		// 	r2 = r2 + 1
+		// r5 = r2
+		//
+		// This can can be more simply written as:
+		//
+		// r5 = r5 / 256
+		//
+		// This change solves part 1 in 35 instructions rather than
+		// 1848 instructions.
+		//
+		// It has a similar effect on solving part 2. Part 2 runtime
+		// has gone from ~20 seconds to 4ms.
+		// This is equivalent to inline assembly for our ElfCode,
+		// rewriting the hot loop in Go. We could also have added a
+		// new opcode to the language, so support native division. But
+		// would have required more effort to preprocess the input.
+		p.registers[5] = p.registers[5] / 256
+		p.instructionPointer = 27
+	}
+
+	// if p.instructionPointer == 27 {
+	// 	// Ensure that our rewrite of the hot loop hasn't mangled the registers
+	// 	fmt.Printf("Leaving hot loop: %v\n", p.registers)
+	// }
 
 	instruction := p.instructions[p.instructionPointer]
 
