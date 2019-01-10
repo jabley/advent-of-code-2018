@@ -1,0 +1,7 @@
+[package]
+name = "rust21"
+version = "0.1.0"
+authors = ["James Abley <james.abley@gmail.com>"]
+edition = "2018"
+
+[dependencies]
