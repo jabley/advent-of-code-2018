@@ -37,7 +37,11 @@ func main() {
 
 	defer f.Close()
 
-	// bots := parse(f)
+	bots := parse(f)
+	strongest := findStrongest(bots)
+	partA := withinRange(bots, strongest)
+
+	fmt.Println("Part A:", len(partA))
 }
 
 func parse(r io.Reader) []bot {
